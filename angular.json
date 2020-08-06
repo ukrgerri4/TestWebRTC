@@ -123,6 +123,10 @@
           }
         }
       }
-    }},
-  "defaultProject": "TestWebRTC"
+    }
+  },
+  "defaultProject": "TestWebRTC",
+  "cli": {
+    "analytics": false
+  }
 }

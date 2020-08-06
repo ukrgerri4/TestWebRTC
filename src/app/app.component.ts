@@ -8,11 +8,20 @@ import Peer from 'peerjs';
   styleUrls: ['./app.component.scss']
 })
 export class AppComponent implements OnInit {
-  title = 'TestWebRTC';
+  id: any;
 
   ngOnInit(): void {
-    const guid = uuidv4();
-    const per = new Peer(guid);
+    this.id = uuidv4();
+    const peer = new Peer(this.id);
+
+    peer.on('connection', (conn) => {
+      conn.on('data', (data) => {
+        console.log(data);
+      });
+      conn.on('open', () => {
+        conn.send('hello!');
+      });
+    });
   }
 
 }
