@@ -16,7 +16,6 @@
       "dom"
     ],
     "allowSyntheticDefaultImports": true,
-    "esModuleInterop": true
   },
   "angularCompilerOptions": {
     "fullTemplateTypeCheck": true,
