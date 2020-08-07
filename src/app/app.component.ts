@@ -1,6 +1,7 @@
-import { Component, OnInit, ViewChild, TemplateRef, ElementRef } from '@angular/core';
+import { Component, OnInit, ViewChild, TemplateRef, ElementRef, OnDestroy } from '@angular/core';
 import { v4 as uuidv4 } from 'uuid';
 import Peer from 'peerjs';
+import DataConnection from 'peerjs';
 import { Template } from '@angular/compiler/src/render3/r3_ast';
 
 @Component({
@@ -8,30 +9,94 @@ import { Template } from '@angular/compiler/src/render3/r3_ast';
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.scss']
 })
-export class AppComponent implements OnInit {
-  id: any;
-  peer: Peer = null;
-  conn2: any;
-  otherId: any;
+export class AppComponent implements OnInit, OnDestroy {
+  uuidv4: any;
+  peer: Peer;
+  connection: Peer.DataConnection;
+  i = 0;
 
   @ViewChild('idInput') idInputRef: ElementRef;
 
-  ngOnInit(): void {
-    this.id = uuidv4();
-    this.peer = new Peer(this.id);
+  ngOnDestroy() {
+    if (this.connection) { this.connection.close(); }
+  }
 
-    this.peer.on('connection', (conn) => {
-      conn.on('data', (data) => {
-        console.log(data);
+  ngOnInit(): void {
+    this.uuidv4 = uuidv4();
+
+    this.peer = new Peer(this.uuidv4);
+
+    this.peer.on('open', (cId) => {
+      console.log('peer open => ' + cId);
+    });
+
+    this.peer.on('connection', (c) => {
+      console.log(c);
+      this.connection = c;
+      // Disallow incoming connections
+      this.connection.on('open', () => {
+        console.log('Connection opened!');
+        this.connection.send('Hi from PC!');
       });
-      conn.on('open', () => {
-        conn.send('hello!');
+
+      this.connection.on('data', (data) => {
+        console.log('Data => ' + data);
+      });
+
+      this.connection.on('close', () => {
+        console.log('Connection closed');
+      });
+
+      this.connection.on('error', (er) => {
+        console.log(er);
       });
     });
+
+    this.peer.on('disconnected', () => {
+      console.log('Connection lost. Please reconnect');
+
+      // Workaround for this.peer.reconnect deleting previous id
+      // this.peer.id = this.lastPeerId;
+      // this.peer._lastServerId = this.lastPeerId;
+      // this.peer.reconnect();
+    });
+
+    this.peer.on('close', () =>  {
+        this.connection = null;
+        console.log('Connection destroyed');
+    });
+
+    this.peer.on('error', (err) => console.log(err));
   }
 
   connect() {
-    this.conn2 = this.peer.connect(this.idInputRef.nativeElement.value);
+    if (this.connection) {
+      this.connection.close();
+    }
+
+    this.peer.connect(this.idInputRef.nativeElement.value);
+
+    // this.conn2.on('open', () => {
+    //   console.log('OPEND');
+    //   this.conn2.send("con2 Mes2");
+    // });
+
+    // this.conn2.on('data', (data) => {
+    //   console.log('Data' + data);
+    // });
+
+    // this.conn2.on('close', () => {
+    //   console.log('Close');
+    // });
+
+    // this.conn2.on('error', (er) => {
+    //   console.log(er);
+    // });
+  }
+
+
+  send() {
+    this.connection.send(`Test message [${this.i++}]`);
   }
 
 }
